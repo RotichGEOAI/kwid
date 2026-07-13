@@ -1,0 +1,80 @@
+# --- Web app / dashboard framework ---
+streamlit>=1.38.0
+
+# --- Data & numeric ---
+# `>=` instead of `==`: Streamlit Community Cloud currently has a
+# platform bug where runtime.txt is silently ignored and a much newer
+# Python than requested is used (see
+# https://github.com/streamlit/streamlit/issues/15326). An exact old
+# pin with no wheel for that newer Python forces a slow/fragile source
+# build (this previously broke deployment on pandas). A floor version
+# lets the resolver pick whatever compatible release already has a
+# prebuilt wheel for the Python actually in use.
+pandas>=2.2.2
+numpy>=1.26.4
+
+# --- Geospatial (Module 1, 5) ---
+# NOTE: rasterio and fiona are intentionally NOT listed here. Neither is
+# imported anywhere in this codebase (grep the repo — county_loader.py
+# only reads GeoJSON/shapefile via geopandas' pyogrio engine), and both
+# pull in compiled GDAL builds that frequently have no prebuilt wheel
+# for a very new Python. Add them back explicitly only if you need
+# raster I/O or a fiona-specific driver.
+geopandas>=0.14.4
+pyogrio>=0.9.0        # fast, wheel-friendly vector I/O engine used by geopandas
+shapely>=2.0.5
+pyproj>=3.6.1
+folium>=0.16.0
+streamlit-folium>=0.21.0
+
+# --- Interpolation (Module 5) ---
+# pykrige is optional — gis/interpolation.py automatically falls back to
+# IDW if it isn't installed. It's excluded from the base requirements
+# because its build can be finicky on bleeding-edge Python versions;
+# install separately (`pip install pykrige`) if you want true kriging.
+scipy>=1.13.1
+
+# --- Database (Module 4) ---
+# SQLite is the default (DATABASE_URL in .env.example) and needs no
+# extra driver. psycopg2-binary is included for PostgreSQL support
+# (USE_POSTGIS=true / Docker Compose / your own Postgres server).
+#
+# IMPORTANT version note: psycopg2-binary 2.9.9 (previously pinned
+# here) predates Python 3.14 support entirely — there is no wheel for
+# it at any version, on any platform, which is what broke deployment
+# (pip fell back to a source build requiring a system `pg_config` that
+# Streamlit Community Cloud's build image doesn't provide). psycopg2
+# added actual Python 3.14 support starting in 2.9.10, and 2.9.12+
+# publishes real prebuilt wheels for cp314 (including
+# manylinux2014_x86_64) — so `>=2.9.10` here resolves to a real wheel
+# regardless of which Python version the deploy target ends up using,
+# no source build required. Do not pin back down to 2.9.9.
+psycopg2-binary>=2.9.10
+# geoalchemy2 (PostGIS Geometry columns) stays in requirements-postgres.txt
+# — it's only needed if USE_POSTGIS=true, and database/models.py raises
+# a clear error telling you to install it if you flip that flag without it.
+sqlalchemy>=2.0.31
+
+# --- HTTP / API connectors (Module 3) ---
+requests>=2.32.3
+urllib3>=2.2.2
+python-dotenv>=1.0.1
+earthengine-api>=0.1.409   # CHIRPS rainfall via Google Earth Engine (api/chirps.py)
+
+# --- Machine learning (Module 6) ---
+scikit-learn>=1.5.1
+xgboost>=2.1.0
+
+# --- Charts / mapping (Module 7, 8) ---
+plotly>=5.22.0
+matplotlib>=3.9.2
+
+# --- Export (Module 8) ---
+openpyxl>=3.1.5
+reportlab>=4.2.2
+
+# --- Deployment (Module 9) ---
+# Streamlit ships its own production-ready server (`streamlit run`);
+# gunicorn is not used and was removed to keep the dependency set
+# minimal for cloud deployment. docker/nginx.conf reverse-proxies
+# straight to Streamlit's own server.

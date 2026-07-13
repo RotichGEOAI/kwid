@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  kwid-app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: kwid-app
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://kwid:kwid@kwid-db:5432/kwid
+      - USE_POSTGIS=true
+    ports:
+      - "8501:8501"
+    depends_on:
+      kwid-db:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+
+  kwid-db:
+    image: postgis/postgis:16-3.4
+    container_name: kwid-db
+    environment:
+      POSTGRES_USER: kwid
+      POSTGRES_PASSWORD: kwid
+      POSTGRES_DB: kwid
+    volumes:
+      - kwid_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kwid"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: kwid-nginx
+    depends_on:
+      - kwid-app
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+volumes:
+  kwid_pg_data:

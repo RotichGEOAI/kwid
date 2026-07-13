@@ -1,0 +1,13 @@
+# Optional extra: install alongside requirements.txt only if you're
+# running with USE_POSTGIS=true and want PostGIS Geometry columns
+# (e.g. via docker-compose.yml).
+#
+#     pip install -r requirements.txt -r requirements-postgres.txt
+#
+# psycopg2-binary (the Postgres driver itself) lives in the base
+# requirements.txt — it's needed for any PostgreSQL connection, not
+# just PostGIS. geoalchemy2 stays here because it's only needed for
+# the Geometry("POLYGON", ...) column used when USE_POSTGIS=true;
+# database/models.py raises a clear ImportError telling you to install
+# this file if you flip that flag without it.
+geoalchemy2>=0.15.2

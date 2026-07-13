@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.env
+data/processed/*.db
+data/raw/_api_cache/
+logs/*.log
+frontend/node_modules/
+frontend/dist/
+.streamlit/secrets.toml
+*.egg-info/
+.venv/
+venv/
